@@ -1,9 +1,9 @@
-Together the WG hooks` implement:
+Together the WG hooks implement:
 
-“Keep access to private/LAN networks outside the tunnel”, andca “kill switch” that rejects non-VPN traffic (except LAN + local).
+“Keep access to private/LAN networks outside the tunnel”, andca “kill switch” that rejects non-tunnel traffic (except LAN + local).
 
 ### PostUp (runs when WG comes up)
-#### 1) Capture your current default gateway (the non-VPN one)
+#### 1) Capture your current default gateway (the non-tunnel one)
 
 `DROUTE=$(ip route | grep default | awk '{print $3}')`
 
@@ -23,7 +23,7 @@ ip route add $HOMENET3 via $DROUTE
 ip route add $HOMENET2 via $DROUTE
 ip route add $HOMENET  via $DROUTE
 ```
-Purpose: if your WG config is doing a “full tunnel” (e.g., `AllowedIPs = 0.0.0.0/0`), WG often installs routes/defaults that would otherwise send everything into the tunnel. These specific routes force traffic to private networks to go via the normal LAN gateway instead (so you can still reach local subnets, printers, NAS, routers, etc.).
+Purpose: if your WG config is doing a “full tunnel” (e.g., `AllowedIPs = 0.0.0.0/0`), WG often installs routes/defaults that would otherwise send everything into the tunnel. These specific routes force traffic to private networks to go via the normal LAN gateway instead.
 
 #### 4) Allow those private destinations in OUTPUT before the kill switch
 ```
@@ -50,7 +50,7 @@ iptables -A OUTPUT ! -o %i \
 
 `-j REJECT` → block it.
 
-Net effect: if the VPN is up, any outbound traffic that tries to “leak” out the normal interface instead of the WG tunnel gets rejected — except the RFC1918 private networks (which you explicitly allow) and purely local destinations.
+Net effect: if the tunnel is up, any outbound traffic that tries to “leak” out the normal interface instead of the WG tunnel gets rejected — except the RFC1918 private networks (which you explicitly allow) and purely local destinations.
 
 ### PreDown (runs when WG goes down)
 
@@ -82,5 +82,5 @@ iptables -D OUTPUT -d $HOMENET3 -j ACCEPT
 ```
 Summary:
 
-PostUp: preserves LAN access (routes + `ACCEPT`) and enforces a VPN kill switch `(REJECT` anything not going through WG).
+PostUp: preserves LAN access (routes + `ACCEPT`) and enforces a kill switch `(REJECT` anything not going through WG).
 PreDown: removes those routes and firewall rules.
