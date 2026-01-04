@@ -1,0 +1,32 @@
+services:
+  wireguard:
+    image: lscr.io/linuxserver/wireguard
+    container_name: wireguard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=10
+      - TZ=America/Los_Angeles
+    ports:
+      - 8088:8088
+    volumes:
+      - ./config:/config
+      - /lib/modules:/lib/modules
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent
+    container_name: qbittorrent
+    network_mode: service:wireguard
+    environment:
+      - PUID=1000
+      - PGID=10
+      - TZ=America/Los_Angeles
+      - WEBUI_PORT=8088
+    volumes:
+      - ./qbittorrent/config:/config
+      - /<download_path1>:/downloads
+      - /<download_path2>:/downloads2
